@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+    <script type="text/javascript" src="webgl-utils.js"></script>
+    <script type="text/javascript" src="initShaders.js"></script>
+    <script type="text/javascript" src="MV.js"></script>
+<script type="text/javascript" src="table.js"></script>
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+attribute  vec3 vNormal;
+
+varying vec4 fColor;
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform vec4 lightPosition;
+uniform float shininess;
+uniform float opacity;
+
+//texture
+attribute  vec2 vTexCoord;
+varying vec2 fTexCoord;
+
+//color
+uniform float color_black;
+uniform float color_blue;
+uniform float color_red;
+uniform float color_green;
+
+void main()
+{
+    vec3 pos = -(modelViewMatrix * vPosition).xyz;
+    vec3 light = lightPosition.xyz;
+    vec3 L = normalize( light - pos );
+
+    vec3 E = normalize( -pos );
+    vec3 H = normalize( L + E );
+    
+    vec4 NN = vec4(vNormal,0);
+
+    // Transform vertex normal into eye coordinates
+       
+    vec3 N = normalize( (modelViewMatrix*NN).xyz);
+
+    // Compute terms in the illumination equation
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+    
+    if( dot(L, N) < 0.0 ) {
+	specular = vec4(0.0, 0.0, 0.0, 0.0);
+    } 
+
+    fTexCoord = vTexCoord;
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+
+    fColor = ambient + diffuse + specular;
+    fColor.a = opacity;
+
+    if(color_black == 1.0)
+        fColor += vec4( 1.0, 0.0, 1.0,opacity);
+    if(color_blue == 1.0)
+        fColor += vec4( 0.0, 0.0, 1.0,opacity);
+    if(color_red == 1.0)
+        fColor += vec4( 1.0, 0.0, 0.0,opacity);
+    if(color_green == 1.0)
+        fColor += vec4( 0.0, 1.0, 0.0,opacity);
+
+} 
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+varying vec4 fColor;
+varying  vec2 fTexCoord;
+
+uniform float text_flag;
+uniform sampler2D Tex0;
+uniform sampler2D Tex1;
+
+void main()
+{
+    gl_FragColor = fColor;
+    
+    if(text_flag == 1.0)
+        gl_FragColor = texture2D(Tex0, fTexCoord)*texture2D(Tex1, fTexCoord);
+    
+}
+
+</script>
+<body>
+AYÇA NUR VANLI
+
+Default Values: Orthogonal Projection, Color: Wood Brown
+<div>
+
+<canvas id="gl-canvas" width="640" height="360" style ="float:left">
+
+</canvas>
+</div>
+
+<div>
+~Rotate according to axis buttons:
+</div>
+    <button id = "ButtonX">Rotate X</button>
+    <button id = "ButtonY">Rotate Y</button>
+    <button id = "ButtonZ">Rotate Z</button>
+    <button id = "ButtonChangeRotate">Rotate Other Way</button>
+
+<div>
+<br>
+~Change the rotate speed of the table buttons:
+</div>
+
+    <button id = "ButtonFaster">Speed Faster</button>
+    <button id = "ButtonSlower">Speed Slower</button>
+
+<div>
+<br>
+~Scale table up and scale table down buttons:
+</div>
+    <button id = "ButtonScaleUp">Scale Table Up</button>
+    <button id = "ButtonScaleDown">Scale Table Down</button>
+</div>
+
+<div>
+<br>
+    ~Change the texture of table and change the table into wireframe menu:
+</div>
+    <select id="textMenu" size="4"> <option value="0"> See as WireFrame </option> <option value="1">  Discard WireFrame </option> <option value="2"> Square Texture</option><option value="3"> Remove Square Texture</option></select> 
+<div>
+    <br>
+    ~Change the color of the table menu: 
+</div>
+    <select id="colorMenu" size="4"> <option value="0"> Change Table Color to Magenta </option> <option value="1">  Change Table Color to Red </option> <option value="2"> Change Table Color to Green</option><option value="3"> Change Table Color to Blue</option></select> 
+</div>
+<div>
+    <br>
+    ~Change projection of the table to perspective or orthogonal buttons:
+</div>
+    (Keyboard Short Cut // Perspective --> P, Orthogonal --> O )
+</div>
+<div>
+    <button id = "ButtonPerspective">Change to Perspective Projection</button>
+    <button id = "ButtonOrtho">Change to Orthogonal Projection</button>
+</div>
+
+<div>
+<br>~In order to reposition the table more visiually pleasing, please first click the Stop button. Reposition and Stop Buttons:
+</div>
+ (Keyboard Short Cut // Increase X Axis Value --> D, Decrease X Axis Value --> A, Increase Y Axis Value --> W, Decrease Y Axis Value --> S )
+</div>
+<div>
+<button id = "ButtonT">Stop</button>
+<button id = "ButtonRight">Increase X Axis Value</button>
+<button id = "ButtonLeft">Decrease X Axis Value </button>
+<button id = "ButtonUp">Increase Y Axis Value</button>
+<button id = "ButtonDown">Decrease Y Axis Value</button>
+</div>
+<div>
+<br>
+~In order to see the light change better, please first press the Stop button. Lighting Buttons:
+</div>
+    <button id = "ButtonLightX">Move Light Respect to X</button>
+    <button id = "ButtonLightY">Move Light Respect to Y</button>
+    <button id = "ButtonLightZ">Move Light Respect to Z</button>
+</div>
+<div>
+    <br>
+    ~Change the transparecy of the color of the table buttons:
+</div>
+<button id = "ButtonOpacityDown">Make Table More Transparent In Color</button>
+<button id = "ButtonOpacityUp">Make Table More Opace In Color</button>
+</div>
+
+
+</body>
+
+</html>
